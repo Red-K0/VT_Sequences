@@ -131,15 +131,15 @@ static bool SetConsoleColor(int ForegroundColor, int BackgroundColor)
 	{
 	default: return false;
 	case -1: break; // Do Nothing
-	case  0: printf(ESC "[49m"); break; // Reset
-	case  1: printf(ESC "[40m"); break; // Black
-	case  2: printf(ESC "[41m"); break; // Red
-	case  3: printf(ESC "[42m"); break; // Green
-	case  4: printf(ESC "[43m"); break; // Yellow
-	case  5: printf(ESC "[44m"); break; // Blue
-	case  6: printf(ESC "[45m"); break; // Magenta
-	case  7: printf(ESC "[46m"); break; // Cyan
-	case  8: printf(ESC "[47m"); break; // White
+	case  0: printf(ESC "[49m");  break; // Reset
+	case  1: printf(ESC "[40m");  break; // Black
+	case  2: printf(ESC "[41m");  break; // Red
+	case  3: printf(ESC "[42m");  break; // Green
+	case  4: printf(ESC "[43m");  break; // Yellow
+	case  5: printf(ESC "[44m");  break; // Blue
+	case  6: printf(ESC "[45m");  break; // Magenta
+	case  7: printf(ESC "[46m");  break; // Cyan
+	case  8: printf(ESC "[47m");  break; // White
 	case  9: printf(ESC "[100m"); break; // Bright Black
 	case 10: printf(ESC "[101m"); break; // Bright Red
 	case 11: printf(ESC "[102m"); break; // Bright Green
