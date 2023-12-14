@@ -96,13 +96,14 @@ static bool SwitchScreenBuffer(bool Clear = false)
 	}
 }
 
+#pragma region Color Controls
 /// <summary> Sets the console foreground and background colors using the parameters called.</summary>
-/// <param name="Table:"> [ 1: Black | 2: Red | 3: Green | 4: Yellow | 5: Blue | 6: Magenta | 7: Cyan | 8: White ]
-/// Add 8 for a bright/bold version of any given color, use 0 to reset to the default color, or -1 to leave the color as is.</param>
-/// <param name=""></param>
 /// <param name="ForegroundColor:"> The color to set the foreground color to according to the color table attached. </param>
 /// <param name="BackgroundColor:"> The color to set the background color to according to the color table attached. </param>
-/// <returns> Returns true if the given color choices were set successfully, otherwise returns false. </returns>
+/// <param name=""></param>
+/// <param name="Table:"> [ 1: Black | 2: Red | 3: Green | 4: Yellow | 5: Blue | 6: Magenta | 7: Cyan | 8: White ]
+/// Add 8 for a bright/bold version of any given color, use 0 to reset to the default color, or -1 to leave the color as is.</param>
+/// <returns> True if the given color choices were set successfully, otherwise returns false. </returns>
 static bool SetConsoleColor(int ForegroundColor, int BackgroundColor)
 {
 	switch (ForegroundColor)
@@ -153,8 +154,55 @@ static bool SetConsoleColor(int ForegroundColor, int BackgroundColor)
 	return true;
 }
 
-/// <summary> Inverts the current console colors (Foreground color is set to background color and vice versa). </summary>
-static void NegativeConsole()
+/// <summary> Sets the console foreground or background color to the specified RGB value. </summary>
+/// <param name="LayerSelect:"> Indicates a foreground color if true, and a background color if false. </param>
+/// <param name="R, G, B:"> Values between 0 and 255 representing the components of the color. </param>
+static void SetConsoleColorExS(bool LayerSelect, uint8_t R, uint8_t G, uint8_t B)
 {
-	printf(ESC "[7m");
+	std::ostringstream command;
+	if (LayerSelect) command << ESC << "[38;" << 2 << ';' << R << ';' << G << ';' << B;
+	else command << ESC << "[48;" << 2 << ';' << R << ';' << G << ';' << B;
+	printf(command.str().c_str());
 }
+
+/// <summary> Sets the console foreground or background color to the specified index in the xterm 88/256 color table. </summary>
+/// <param name="LayerSelect:"> Indicates a foreground color if true, and a background color if false. </param>
+/// <param name="s:"> The color index to apply from the xterm table. </param>
+static void SetConsoleColorExI(bool LayerSelect, uint8_t s)
+{
+	std::ostringstream command;
+	if (LayerSelect) command << ESC << "[38;" << 5 << ';' << s;
+	else command << ESC << "[48;" << 5 << ';' << s;
+	printf(command.str().c_str());
+}
+
+/// <summary> Applies a modifier to the current console colors. Resets all parameters to defaults if the input is -1. </summary>
+/// <param name ="Select:"> Applies a modifier from the attached table. </param>
+/// <param name="Table:"> [ 0: Negative Colors | 1: Positive Colors | 2: Brighten foreground | 3: Dull foreground | 4: Underline On | 5: Underline Off ] </param>
+/// <returns> True on a successful call, otherwise returns false. </returns>
+static bool SetConsoleColorMod(int Select)
+{
+	switch (Select)
+	{
+	default: return false;
+	case -1: printf(ESC "[0m");
+	 case 0: printf(ESC "[7m");
+	 case 1: printf(ESC "[27m");
+	 case 2: printf(ESC "[1m");
+	 case 3: printf(ESC "[22m");
+	 case 4: printf(ESC "[4m");
+	 case 5: printf(ESC "[24m");
+	}
+}
+
+/// <summary> Modifies the color palette value at the given index to match the given RGB value. </summary>
+/// <param name="index"> The index of the color to modify. </param>
+/// <param name="R, G, B:"> Values between 0 and 255 representing the components of the color. </param>
+static void SetConsoleColorTable(int index, uint8_t R, uint8_t G, uint8_t B)
+{
+	std::ostringstream command;
+	command << ESC << "]4;" << index << ';' << "rgb:" << R << '/' << G << '/' << B << ESC << '\\';
+	printf(command.str().c_str());
+
+}
+#pragma endregion
