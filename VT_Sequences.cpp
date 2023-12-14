@@ -71,7 +71,10 @@ static void SetConsoleSize(int X, int Y)
 	printf(command.str().c_str());
 }
 
-static bool SwitchScreenBuffer()
+/// <summary> Switches the active console buffer to the alternate buffer if the main buffer is active, otherwise returns to the main console buffer. </summary>
+/// <param name="Clear:"> Optional, clears the switched-from buffer using the system("cls") call if set to true. </param>
+/// <returns> True if the switched-to buffer was the alternate buffer, otherwise returns false. </returns>
+static bool SwitchScreenBuffer(bool Clear = false)
 {
 	if (!AlternateBufferActive)
 	{
@@ -87,7 +90,14 @@ static bool SwitchScreenBuffer()
 	}
 }
 
-static int  SetConsoleColor(int ForegroundColor, int BackgroundColor)
+/// <summary> Sets the console foreground and background colors using the parameters called.</summary>
+/// <param name="Table:"> [ 1: Black | 2: Red | 3: Green | 4: Yellow | 5: Blue | 6: Magenta | 7: Cyan | 8: White ]
+/// Add 8 for a bright/bold version of any given color, use 0 to reset to the default color, or -1 to leave the color as is.</param>
+/// <param name=""></param>
+/// <param name="ForegroundColor:"> The color to set the foreground color to according to the color table attached. </param>
+/// <param name="BackgroundColor:"> The color to set the background color to according to the color table attached. </param>
+/// <returns> Returns true if the given color choices were set successfully, otherwise returns false. </returns>
+static bool SetConsoleColor(int ForegroundColor, int BackgroundColor)
 {
 	switch (ForegroundColor)
 	{
@@ -132,7 +142,7 @@ static int  SetConsoleColor(int ForegroundColor, int BackgroundColor)
 	case 16: printf(ESC "[107m"); break; // Bright White
 	}
 
-	return 0;
+	return true;
 }
 
 static void NegativeConsole()
