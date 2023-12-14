@@ -3,8 +3,13 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+<<<<<<< HEAD
 .gitignore
 .gitattributes
+=======
+*.gitignore
+*.gitattributes
+>>>>>>> f6ced87 (New files ignored)
 
 # User-specific files
 *.rsuser
