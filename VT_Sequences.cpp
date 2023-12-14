@@ -5,14 +5,16 @@
 #include <stdio.h>
 #include <sstream>
 
+///<summary> The escape sequence used for virtual terminal sequences. </summary>
 #define ESC "\x1b"
 
 //Variables
+///<summary> Is the console's altenate buffer currently active? </summary>
 bool AlternateBufferActive = false;
-int  HorizontalResolution = 32;
-int  VerticalResolution = 32;
 #pragma endregion
 
+/// <summary> Modifies the console output mode to handle virtual sequences. Necessary to utilize any virtual sequences. </summary>
+/// <returns> True if successful, otherwise returns false. </returns> 
 static bool EnableVirtual()
 {
 	// Set output mode to handle virtual terminal sequences
@@ -64,6 +66,9 @@ static bool EnableVirtual()
 	return true;
 }
 
+/// <summary> Sets the console window and buffer size to the value specified by the given parameters. </summary>
+/// <param name="X:"> The width of the console window in characters. </param>
+/// <param name="Y:"> The height of the console window in characters. </param>
 static void SetConsoleSize(int X, int Y)
 {
 	std::ostringstream command;
@@ -76,6 +81,7 @@ static void SetConsoleSize(int X, int Y)
 /// <returns> True if the switched-to buffer was the alternate buffer, otherwise returns false. </returns>
 static bool SwitchScreenBuffer(bool Clear = false)
 {
+	if (Clear) system("cls");
 	if (!AlternateBufferActive)
 	{
 		printf(ESC "[?1049h");
@@ -101,6 +107,7 @@ static bool SetConsoleColor(int ForegroundColor, int BackgroundColor)
 {
 	switch (ForegroundColor)
 	{
+	default: return false;
 	case -1: break; // Do Nothing
 	case  0: printf(ESC "[39m"); break; // Reset
 	case  1: printf(ESC "[30m"); break; // Black
@@ -122,6 +129,7 @@ static bool SetConsoleColor(int ForegroundColor, int BackgroundColor)
 	}
 	switch (BackgroundColor)
 	{
+	default: return false;
 	case -1: break; // Do Nothing
 	case  0: printf(ESC "[49m"); break; // Reset
 	case  1: printf(ESC "[40m"); break; // Black
@@ -145,6 +153,7 @@ static bool SetConsoleColor(int ForegroundColor, int BackgroundColor)
 	return true;
 }
 
+/// <summary> Inverts the current console colors (Foreground color is set to background color and vice versa). </summary>
 static void NegativeConsole()
 {
 	printf(ESC "[7m");
