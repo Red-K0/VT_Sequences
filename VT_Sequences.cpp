@@ -1,9 +1,9 @@
 #pragma region Boilerplate
 #include "pch.h"
 #include "framework.h"
-#include <Windows.h>
-#include <stdio.h>
 #include <sstream>
+#include <stdio.h>
+#include <Windows.h>
 
 ///<summary> The escape sequence used for virtual terminal sequences. </summary>
 #define ESC "\x1b"
@@ -15,7 +15,7 @@ bool AlternateBufferActive = false;
 
 /// <summary> Modifies the console output mode to handle virtual sequences. Necessary to utilize any virtual sequences. </summary>
 /// <returns> True if successful, otherwise returns false. </returns> 
-static bool EnableVirtual()
+static bool VT_EnableVirtual()
 {
 	// Set output mode to handle virtual terminal sequences
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -69,19 +69,19 @@ static bool EnableVirtual()
 /// <summary> Sets the console window and buffer size to the value specified by the given parameters. </summary>
 /// <param name="X:"> The width of the console window in characters. </param>
 /// <param name="Y:"> The height of the console window in characters. </param>
-static void SetConsoleSize(int X, int Y)
+static void VT_SetConsoleSize(int X, int Y)
 {
 	std::ostringstream command;
-	command << ESC << "[8;" << X << ";" << Y << "t";
+	command << ESC << "[8;" << X << ';' << Y << 't';
 	printf(command.str().c_str());
 }
 
 /// <summary> Switches the active console buffer to the alternate buffer if the main buffer is active, otherwise returns to the main console buffer. </summary>
-/// <param name="Clear:"> Optional, clears the switched-from buffer using the system("cls") call if set to true. </param>
+/// <param name="Clear:"> Optional, clears the switched-from buffer if set to true. </param>
 /// <returns> True if the switched-to buffer was the alternate buffer, otherwise returns false. </returns>
-static bool SwitchScreenBuffer(bool Clear = false)
+static bool VT_SwitchScreenBuffer(bool Clear = false)
 {
-	if (Clear) system("cls");
+	if (Clear) printf(ESC "[2J" ESC "[H");
 	if (!AlternateBufferActive)
 	{
 		printf(ESC "[?1049h");
@@ -104,7 +104,7 @@ static bool SwitchScreenBuffer(bool Clear = false)
 /// <param name="Table:"> [ 1: Black | 2: Red | 3: Green | 4: Yellow | 5: Blue | 6: Magenta | 7: Cyan | 8: White ]
 /// Add 8 for a bright/bold version of any given color, use 0 to reset to the default color, or -1 to leave the color as is.</param>
 /// <returns> True if the given color choices were set successfully, otherwise returns false. </returns>
-static bool SetConsoleColor(int ForegroundColor, int BackgroundColor)
+static bool VTColor_Set(int ForegroundColor, int BackgroundColor)
 {
 	switch (ForegroundColor)
 	{
@@ -157,22 +157,22 @@ static bool SetConsoleColor(int ForegroundColor, int BackgroundColor)
 /// <summary> Sets the console foreground or background color to the specified RGB value. </summary>
 /// <param name="LayerSelect:"> Indicates a foreground color if true, and a background color if false. </param>
 /// <param name="R, G, B:"> Values between 0 and 255 representing the components of the color. </param>
-static void SetConsoleColorExS(bool LayerSelect, uint8_t R, uint8_t G, uint8_t B)
+static void VTColor_SetExtended(bool LayerSelect, uint8_t R, uint8_t G, uint8_t B)
 {
 	std::ostringstream command;
-	if (LayerSelect) command << ESC << "[38;" << 2 << ';' << R << ';' << G << ';' << B;
-	else command << ESC << "[48;" << 2 << ';' << R << ';' << G << ';' << B;
+	if (LayerSelect) command << ESC << "[38;2;" << R << ';' << G << ';' << B;
+	else command << ESC << "[48;2;" << R << ';' << G << ';' << B;
 	printf(command.str().c_str());
 }
 
 /// <summary> Sets the console foreground or background color to the specified index in the xterm 88/256 color table. </summary>
 /// <param name="LayerSelect:"> Indicates a foreground color if true, and a background color if false. </param>
 /// <param name="s:"> The color index to apply from the xterm table. </param>
-static void SetConsoleColorExI(bool LayerSelect, uint8_t s)
+static void VTColor_SetIndexed(bool LayerSelect, uint8_t s)
 {
 	std::ostringstream command;
-	if (LayerSelect) command << ESC << "[38;" << 5 << ';' << s;
-	else command << ESC << "[48;" << 5 << ';' << s;
+	if (LayerSelect) command << ESC << "[38;5;" << s;
+	else command << ESC << "[48;5;" << s;
 	printf(command.str().c_str());
 }
 
@@ -180,7 +180,7 @@ static void SetConsoleColorExI(bool LayerSelect, uint8_t s)
 /// <param name ="Select:"> Applies a modifier from the attached table. </param>
 /// <param name="Table:"> [ 0: Negative Colors | 1: Positive Colors | 2: Brighten foreground | 3: Dull foreground | 4: Underline On | 5: Underline Off ] </param>
 /// <returns> True on a successful call, otherwise returns false. </returns>
-static bool SetConsoleColorMod(int Select)
+static bool VTColor_SetPalette(int Select)
 {
 	switch (Select)
 	{
@@ -198,10 +198,10 @@ static bool SetConsoleColorMod(int Select)
 /// <summary> Modifies the color palette value at the given index to match the given RGB value. </summary>
 /// <param name="index"> The index of the color to modify. </param>
 /// <param name="R, G, B:"> Values between 0 and 255 representing the components of the color. </param>
-static void SetConsoleColorTable(int index, uint8_t R, uint8_t G, uint8_t B)
+static void VTColor_SetModifier(int index, uint8_t R, uint8_t G, uint8_t B)
 {
 	std::ostringstream command;
-	command << ESC << "]4;" << index << ';' << "rgb:" << R << '/' << G << '/' << B << ESC << '\\';
+	command << ESC"]4;" << index << ";rgb:" << R << '/' << G << '/' << B << ESC << '\\';
 	printf(command.str().c_str());
 
 }
