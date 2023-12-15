@@ -11,6 +11,8 @@
 //Variables
 ///<summary> Is the console's altenate buffer currently active? </summary>
 bool AlternateBufferActive = false;
+bool IsCursorBlinking = true;
+bool IsCursorVisible = true;
 #pragma endregion
 
 /// <summary> Modifies the console output mode to handle virtual sequences. Necessary to utilize any virtual sequences. </summary>
@@ -95,6 +97,110 @@ static bool VT_SwitchScreenBuffer(bool Clear = false)
 		return false;
 	}
 }
+
+#pragma region Cursor Controls
+
+/// <summary> Moves the cursor up one row, maintains column position. </summary>
+static void VTCursor_RevIndex()
+{
+	printf(ESC "M");
+}
+
+/// <summary> Saves the cursor position to memory if 'Mode' is set to true, otherwise restores it. </summary>
+/// <param name="ANSILegacyMode:"> Optional, when set to true, uses ANSI.sys emulation for compatability. </param>
+static void VTCursor_Memory(bool Mode, bool ANSILegacyMode = false)
+{
+	if (ANSILegacyMode) { if (Mode) printf(ESC "[s"); else printf(ESC "[u"); }
+	else if (Mode) printf(ESC "7"); else printf(ESC "8");
+}
+
+/// <summary> Moves the cursor according to the given parameters within the viewport, will not scroll. </summary>
+/// <param name="Mode:"> Specifies the type of movement according to the table attached. </param>
+/// <param name="Table:"> [ 0: Up by 'n' | 1: Down by 'n' | 2: Right by 'n' | 3: Left by 'n' | 4: Down 'n' lines | 5: Up 'n' lines ].
+/// Set Position [ 6: Set X to 'n' | 7: Set Y to 'n' ] </param>
+/// <returns> True if the given mode was valid, otherwise returns false. </returns>
+static bool VTCursor_ModPosition(int Mode, int n)
+{
+	std::ostringstream command;
+	command << ESC << '[' << n << "%c";
+	switch (Mode)
+	{
+	default: return false;
+	case 0: printf(command.str().c_str(), 'A'); // Cursor Up
+	case 1: printf(command.str().c_str(), 'B'); // Cursor Down
+	case 2: printf(command.str().c_str(), 'C'); // Cursor Forward
+	case 3: printf(command.str().c_str(), 'D'); // Cursor Backward
+	case 4: printf(command.str().c_str(), 'E'); // Cursor Next Line
+	case 5: printf(command.str().c_str(), 'F'); // Cursor Previous Line
+	case 6: printf(command.str().c_str(), 'G'); // Cursor Horizontal Absolute
+	case 7: printf(command.str().c_str(), 'd'); // Vertical Line Position Absolute
+	}
+	return true;
+}
+
+/// <summary> Sets the X and Y position of the cursor. </summary>
+/// <param name="X:"> The horizontal position of the cursor. </param>
+/// <param name="Y:"> The vertical position of the cursor. </param>
+/// <param name="LegacyMode:"> If set to true, will perform an HVP call rather than a CUP call. </param>
+static void VTCursor_SetPosition(int X, int Y, bool LegacyMode = false)
+{
+	std::ostringstream command;
+	command << ESC << '[' << Y << ';' << X;
+	if (!LegacyMode)  command << 'H'; else command << 'f';
+	printf(command.str().c_str());
+}
+
+/// <summary> Toggles the cursor blinking behaviour in the console. </summary>
+/// <param name="Set:"> Optional, forces the blinking off when 0, and on when 1. </param>
+/// <returns> True on a successful call, otherwise returns false. </returns>
+static bool VTCursor_ToggleBlink(int Set = -1)
+{
+	switch (Set)
+	{
+	default: return false;
+	case -1: if (IsCursorBlinking) { printf(ESC "[?12l"); IsCursorBlinking = false; } else { printf(ESC "[?12h"); IsCursorBlinking = true; }
+	case  0: printf(ESC "[?12l"); IsCursorBlinking = false;
+	case  1: printf(ESC "[?12h"); IsCursorBlinking = true;
+	}
+}
+
+/// <summary> Toggles the cursor visibility. </summary>
+/// <param name="Set:"> Optional, forces visibility to off when 0, and on when 1. </param>
+/// <returns> True on a successful call, otherwise returns false. </returns>
+static bool VTCursor_ToggleVisibility(int Set = -1)
+{
+	switch (Set)
+	{
+	default: return false;
+	case -1: if (IsCursorVisible) { printf(ESC "[?25l"); IsCursorVisible = false; } else { printf(ESC "[?25h"); IsCursorVisible = true; }
+	case  0: printf(ESC "[?25l"); IsCursorVisible = false;
+	case  1: printf(ESC "[?25h"); IsCursorVisible = true;
+	}
+}
+
+/// <summary> Sets the shape of the cursor according to the given 'Choice' parameter. </summary>
+/// <param name="Choice:"> The shape to set the cursor to according to the attached table. </param>
+/// <param name="Table:"> [ 0: Defaults | 1: Block | 3: Underline | 5: Bar ] Add 1 for the non-blinking version of a shape. </param>
+/// <returns> True on a successful call, otherwise returns false. </returns>
+static bool VTCursor_SetShape(int Choice)
+{
+	switch (Choice)
+	{
+	default: return false;
+	case  0: printf(ESC "[0 q"); IsCursorBlinking = true;  break; // Default
+	case  1: printf(ESC "[1 q"); IsCursorBlinking = true;  break; // Block Blinking
+	case  2: printf(ESC "[2 q"); IsCursorBlinking = false; break; // Block Steady
+	case  3: printf(ESC "[3 q"); IsCursorBlinking = true;  break; // Underline Blinking
+	case  4: printf(ESC "[4 q"); IsCursorBlinking = false; break; // Underline Steady
+	case  5: printf(ESC "[5 q"); IsCursorBlinking = true;  break; // Bar Blinking
+	case  6: printf(ESC "[6 q"); IsCursorBlinking = false; break; // Bar Steady
+	}
+	return true;
+}
+
+#pragma endregion
+
+
 
 #pragma region Color Controls
 /// <summary> Sets the console foreground and background colors using the parameters called.</summary>
